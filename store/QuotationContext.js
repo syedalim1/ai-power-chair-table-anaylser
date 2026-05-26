@@ -145,6 +145,7 @@ export function QuotationProvider({ children }) {
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [alertMsg, setAlertMsg] = useState(null);
+  const [factoryMode, setFactoryMode] = useState(false);
 
   // Data Collections
   const [quotations, setQuotations] = useState([]);
@@ -497,6 +498,8 @@ export function QuotationProvider({ children }) {
         setSidebarOpen,
         alertMsg,
         triggerAlert,
+        factoryMode,
+        setFactoryMode,
         quotations,
         searchQuery,
         setSearchQuery,

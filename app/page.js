@@ -7,6 +7,7 @@ import DashboardStats from "../components/dashboard/DashboardStats.jsx";
 import RecentQuotations from "../components/dashboard/RecentQuotations.jsx";
 import RevenueOverview from "../components/dashboard/RevenueOverview.jsx";
 import AIRecommendationPanel from "../components/ai/AIRecommendationPanel.jsx";
+import ActivityTimeline from "../components/dashboard/ActivityTimeline.jsx";
 import QuotationForm from "../components/quotation/QuotationForm.jsx";
 import QuotationTable from "../components/tables/QuotationTable.jsx";
 import InputField from "../components/forms/InputField.jsx";
@@ -148,8 +149,9 @@ function AppContent() {
             <div className="lg:col-span-2">
               <RevenueOverview />
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6">
               <AIRecommendationPanel />
+              <ActivityTimeline />
             </div>
           </div>
 

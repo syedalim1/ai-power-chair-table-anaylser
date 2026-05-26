@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Menu, Calendar, Bell, User } from "lucide-react";
+import { Menu, Calendar, Bell, User, Zap } from "lucide-react";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 import useQuotation from "../../hooks/useQuotation.js";
 
@@ -11,10 +11,19 @@ export default function Header() {
     setSidebarOpen,
     companyInfo,
     darkMode,
-    dbSettings
+    dbSettings,
+    factoryMode,
+    setFactoryMode,
+    triggerAlert
   } = useQuotation();
 
   const [timeStr, setTimeStr] = useState("");
+
+  const handleFactoryToggle = () => {
+    const nextVal = !factoryMode;
+    setFactoryMode(nextVal);
+    triggerAlert("info", nextVal ? "⚡ Factory High-Contrast Workspace activated." : "Standard Workspace loaded.");
+  };
 
   useEffect(() => {
     const tick = () => {
@@ -60,6 +69,20 @@ export default function Header() {
           <Calendar className="w-3.5 h-3.5 text-amber-500" />
           <span>{timeStr}</span>
         </div>
+
+        {/* Factory Mode Switch */}
+        <button
+          onClick={handleFactoryToggle}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 relative overflow-hidden group ${
+            factoryMode
+              ? "bg-amber-500 text-slate-950 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200"
+          }`}
+          title="Toggle Factory High-Contrast Mode"
+        >
+          <Zap className={`w-3.5 h-3.5 ${factoryMode ? "fill-slate-950 animate-bounce" : ""}`} />
+          <span className="hidden sm:inline">Factory Mode</span>
+        </button>
 
         {/* Theme Switch */}
         <ThemeSwitcher />
