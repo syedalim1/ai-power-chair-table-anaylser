@@ -141,7 +141,7 @@ const QuotationContext = createContext(null);
 
 export function QuotationProvider({ children }) {
   // Global View Settings
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("new-quotation");
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [alertMsg, setAlertMsg] = useState(null);

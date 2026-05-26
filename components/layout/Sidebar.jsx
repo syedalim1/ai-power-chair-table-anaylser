@@ -13,9 +13,8 @@ import { motion } from "framer-motion";
 import useQuotation from "../../hooks/useQuotation.js";
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "new-quotation", label: "New Quotation", icon: Plus },
-  { id: "saved-quotations", label: "Saved Quotations", icon: FileText },
+  { id: "new-quotation", label: "New Estimate", icon: Plus },
+  { id: "saved-quotations", label: "Saved Estimates", icon: FileText },
   { id: "templates", label: "Templates", icon: Layers },
   { id: "settings", label: "Settings", icon: SettingsIcon }
 ];
