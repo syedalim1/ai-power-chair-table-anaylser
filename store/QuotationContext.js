@@ -117,7 +117,24 @@ const INITIAL_FORM_STATE = {
   markup: 25,
   gst: 18,
   isPipeLengthOverridden: false,
-  manualPipeLength: 20
+  manualPipeLength: 20,
+  pricingMode: "retail",
+  gstEnabled: true,
+  workerNotes: "",
+  fabricationInstructions: "",
+  outputControls: {
+    showWholesale: true,
+    showRetail: true,
+    showDealer: true,
+    showProfit: true,
+    showPipeCalc: true,
+    showLabourCost: true,
+    showWeight: true,
+    showGst: true,
+    showTransport: true,
+    showPacking: true,
+    showCutList: true
+  }
 };
 
 const QuotationContext = createContext(null);
@@ -266,7 +283,24 @@ export function QuotationProvider({ children }) {
       markup: tpl.markup,
       gst: tpl.gst,
       isPipeLengthOverridden: false,
-      manualPipeLength: 0
+      manualPipeLength: 0,
+      pricingMode: "retail",
+      gstEnabled: true,
+      workerNotes: "",
+      fabricationInstructions: "",
+      outputControls: {
+        showWholesale: true,
+        showRetail: true,
+        showDealer: true,
+        showProfit: true,
+        showPipeCalc: true,
+        showLabourCost: true,
+        showWeight: true,
+        showGst: true,
+        showTransport: true,
+        showPacking: true,
+        showCutList: true
+      }
     });
     setActiveTab("new-quotation");
     triggerAlert("success", `Template "${tpl.name}" loaded successfully.`);
@@ -330,7 +364,24 @@ export function QuotationProvider({ children }) {
       markup: q.markup,
       gst: q.gst,
       isPipeLengthOverridden: q.pipeLength !== undefined,
-      manualPipeLength: q.pipeLength || 0
+      manualPipeLength: q.pipeLength || 0,
+      pricingMode: q.pricingMode || "retail",
+      gstEnabled: q.gstEnabled !== undefined ? q.gstEnabled : true,
+      workerNotes: q.workerNotes || "",
+      fabricationInstructions: q.fabricationInstructions || "",
+      outputControls: q.outputControls || {
+        showWholesale: true,
+        showRetail: true,
+        showDealer: true,
+        showProfit: true,
+        showPipeCalc: true,
+        showLabourCost: true,
+        showWeight: true,
+        showGst: true,
+        showTransport: true,
+        showPacking: true,
+        showCutList: true
+      }
     });
     setActiveTab("new-quotation");
     triggerAlert("success", `Quotation "${q.quoteNo}" loaded in editor.`);

@@ -5,6 +5,7 @@ import { calculateLabourSumPerUnit } from "./labourCalculations.js";
 
 /**
  * Orchestrates all estimation algorithms and calculates the comprehensive commercial details.
+ * Supports Retail, Wholesale, Dealer and Custom pricing modes, and GST toggles.
  *
  * @param {object} inputs - Complete quotation form inputs
  * @returns {object} All computed pricing and weight metrics
@@ -20,7 +21,9 @@ export function runQuotationCalculations(inputs) {
     markup = 25,
     gst = 18,
     isPipeLengthOverridden = false,
-    manualPipeLength = 0
+    manualPipeLength = 0,
+    pricingMode = "retail",
+    gstEnabled = true
   } = inputs;
 
   const qty = Math.max(1, Number(quantity) || 1);
@@ -57,17 +60,35 @@ export function runQuotationCalculations(inputs) {
   const transportCost = Number(costing.transport) || 0;
   const totalBeforeMarkup = subtotalOverall + transportCost;
 
-  // 9. Profit Margin / Markups
-  const markupPercent = Number(markup) || 0;
-  const markupAmount = Math.round(totalBeforeMarkup * (markupPercent / 100));
-  const taxableAmount = totalBeforeMarkup + markupAmount;
+  // 9. Profit Margin / Markups based on Pricing Mode
+  let markupPercent = Number(markup) || 0;
+  let pricingDiscountPercent = 0;
 
-  // 10. Tax / GST
-  const gstPercent = Number(gst) || 0;
+  if (pricingMode === "wholesale") {
+    pricingDiscountPercent = 10; // 10% wholesale discount
+  } else if (pricingMode === "dealer") {
+    pricingDiscountPercent = 15; // 15% dealer discount
+  }
+
+  const baseMarkupAmount = Math.round(totalBeforeMarkup * (markupPercent / 100));
+  let taxableAmountBeforeDiscount = totalBeforeMarkup + baseMarkupAmount;
+  
+  // Apply discount if active
+  const discountAmount = Math.round(taxableAmountBeforeDiscount * (pricingDiscountPercent / 100));
+  const taxableAmount = taxableAmountBeforeDiscount - discountAmount;
+  const markupAmount = baseMarkupAmount - discountAmount; // adjusted net profit
+
+  // 10. Tax / GST (Enabled vs Disabled check)
+  const gstPercent = gstEnabled ? (Number(gst) || 0) : 0;
   const gstAmount = Math.round(taxableAmount * (gstPercent / 100));
 
   // 11. Grand Total
   const grandTotal = taxableAmount + gstAmount;
+
+  // Calculated tier pricings for side-by-side previews
+  const retailTotal = Math.round((totalBeforeMarkup + baseMarkupAmount) * 1.18);
+  const wholesaleTotal = Math.round((totalBeforeMarkup + baseMarkupAmount) * 0.90 * 1.18);
+  const dealerTotal = Math.round((totalBeforeMarkup + baseMarkupAmount) * 0.85 * 1.18);
 
   return {
     calculatedPipeLengthFeet,
@@ -86,6 +107,10 @@ export function runQuotationCalculations(inputs) {
     markupAmount,
     taxableAmount,
     gstAmount,
-    grandTotal
+    grandTotal,
+    discountAmount,
+    retailTotal,
+    wholesaleTotal,
+    dealerTotal
   };
 }

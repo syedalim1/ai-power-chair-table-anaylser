@@ -1,11 +1,13 @@
 /**
- * Generates a professional Vector PDF Quotation document using client-side jsPDF drawing.
+ * Generates a professional Vector PDF document using client-side jsPDF drawing.
+ * Supports dual customer and factory-internal formats.
  *
  * @param {object} source - The quotation data object
  * @param {object} companyInfo - Company profile and tax details
  * @param {function} triggerAlert - Callback to dispatch user messages
+ * @param {boolean} isInternal - Toggle to generate the internal work order blueprint
  */
-export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
+export async function generateQuotationPDF(source, companyInfo, triggerAlert, isInternal = false) {
   try {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({
@@ -15,8 +17,8 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     });
 
     // Primary styling constants
-    const primaryColor = [15, 23, 42]; // Slate 900
-    const accentColor = [217, 119, 6]; // Amber 600
+    const primaryColor = isInternal ? [30, 41, 59] : [15, 23, 42]; // Industrial Slate vs Premium Slate
+    const accentColor = isInternal ? [79, 70, 229] : [217, 119, 6]; // Indigo vs Amber
     const lightBg = [248, 250, 252]; // Slate 50
     const borderLine = [226, 232, 240]; // Slate 200
     
@@ -30,13 +32,15 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     // Company Brand Name & Industry Text
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.text(companyInfo.name, marginX, 16);
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(203, 213, 225); // Slate 300
-    doc.text("PREMIUM STEEL FURNITURE & HEAVY INDUSTRIAL FABRICATION", marginX, 22);
+    doc.text(isInternal 
+      ? "INTERNAL WORK ORDER & FABRICATION SCHEDULE SHEET" 
+      : "PREMIUM CUSTOM FURNITURE & CONTRACT METAL ESTIMATION", marginX, 22);
 
     // Official Supplier details box (Right-aligned)
     doc.setFontSize(8);
@@ -44,16 +48,15 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     doc.text(`GSTIN: ${companyInfo.gstin}`, 130, 14);
     doc.text(`Ph: ${companyInfo.phone1} / ${companyInfo.phone2}`, 130, 19);
     doc.text(`Email: ${companyInfo.email}`, 130, 24);
-    doc.text(`SIDCO Industrial Estate, Coimbatore`, 130, 29);
+    doc.text(`Kurichi SIDCO, Coimbatore`, 130, 29);
 
     currentY = 50;
 
     // 2. CLIENT & QUOTATION DETAILS CARD
-    // Left: Client Name & Coordinates
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setTextColor(...primaryColor);
-    doc.text("QUOTED TO:", marginX, currentY);
+    doc.text(isInternal ? "PRODUCTION ORDER TO:" : "QUOTED TO:", marginX, currentY);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -66,16 +69,16 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
 
     // Right: Quote Meta Info
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
     doc.setTextColor(...accentColor);
-    doc.text("ESTIMATED QUOTATION", 130, currentY);
+    doc.text(isInternal ? "INTERNAL FACTORY BLUEPRINT" : "COMMERCIAL PRO-FORMA", 130, currentY);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(71, 85, 105);
-    doc.text(`Quotation No: ${source.quoteNo}`, 130, currentY + 6);
-    doc.text(`Date: ${source.date || new Date().toISOString().split("T")[0]}`, 130, currentY + 11);
-    doc.text(`Sales Executive: Factory Desk`, 130, currentY + 16);
+    doc.text(`Order Ref No: ${source.quoteNo}`, 130, currentY + 6);
+    doc.text(`Date Compiled: ${source.date || new Date().toISOString().split("T")[0]}`, 130, currentY + 11);
+    doc.text(`Pricing Tier: ${isInternal ? "Factory Cost Grid" : (source.pricingMode || "Retail").toUpperCase()}`, 130, currentY + 16);
 
     // Section Divider Line
     currentY += 32;
@@ -87,75 +90,79 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
 
     // 3. PRODUCT BANNER HEADER
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(11.5);
     doc.setTextColor(...primaryColor);
     doc.text(`Product Name: ${source.productName} (${source.category})`, marginX, currentY);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Quantity Required: ${source.quantity} Unit(s)`, 150, currentY);
+    doc.text(`Batch Quantity: ${source.quantity} Unit(s)`, 150, currentY);
 
     currentY += 8;
 
-    // 4. TECH SPECS TABLE CARD (Two columns)
+    // 4. TECHNICAL DETAILS CARD
     doc.setFillColor(...lightBg);
-    doc.rect(marginX, currentY, 180, 52, "F");
+    doc.rect(marginX, currentY, 180, 48, "F");
     doc.setDrawColor(203, 213, 225);
-    doc.rect(marginX, currentY, 180, 52, "S");
+    doc.rect(marginX, currentY, 180, 48, "S");
 
     // Horizontal line
-    doc.line(marginX + 90, currentY, marginX + 90, currentY + 52);
+    doc.line(marginX + 90, currentY, marginX + 90, currentY + 48);
 
     let textY = currentY + 6;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
+    doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
-    doc.text("Skeletal Framing / Dimensions", marginX + 5, textY);
-    doc.text("Material Specifications & Costing", marginX + 95, textY);
+    doc.text("Skeletal Dimensions", marginX + 5, textY);
+    doc.text(isInternal ? "Raw Metal Specification (Internal)" : "General Specifications (Customer)", marginX + 95, textY);
 
     textY += 6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(51, 65, 85);
     doc.text(`- Overall Height: ${source.dimensions.height} ${source.dimensions.unit}`, marginX + 5, textY);
-    doc.text(`- Pipe Material: ${source.pipe.type} (${source.pipe.shape} Profile)`, marginX + 95, textY);
+    doc.text(`- Steel Profile: ${source.pipe.type} (${source.pipe.shape})`, marginX + 95, textY);
 
     textY += 5;
     doc.text(`- Structure Width: ${source.dimensions.width} ${source.dimensions.unit}`, marginX + 5, textY);
     const pipeSpecSize = source.pipe.shape === "Rectangle" 
       ? `${source.pipe.width}" x ${source.pipe.height}"` 
       : `${source.pipe.width}"`;
-    doc.text(`- Pipe Size & Gauge: ${pipeSpecSize} (${source.pipe.thickness}mm Thickness)`, marginX + 95, textY);
+    doc.text(`- Tubing Sizing: ${pipeSpecSize} (${source.pipe.thickness}mm)`, marginX + 95, textY);
 
     textY += 5;
     doc.text(`- Structure Depth: ${source.dimensions.depth} ${source.dimensions.unit}`, marginX + 5, textY);
-    doc.text(`- Pipe Steel Weight: ${source.pipeWeight} kg (incl. ${source.pipe.wastage}% waste)`, marginX + 95, textY);
+    
+    // Hide raw material weights for customers unless output check is active
+    const showWeight = isInternal || source.outputControls?.showWeight;
+    doc.text(showWeight 
+      ? `- Net Steel Weight: ${source.pipeWeight} KG` 
+      : `- Structural framing: High tensile steel`, marginX + 95, textY);
 
     textY += 5;
-    if (source.category === "Chair" || source.category === "Dining Set") {
-      doc.text(`- Seat Dimensions: ${source.dimensions.seatHeight}H x ${source.dimensions.seatWidth}W x ${source.dimensions.seatDepth}D ${source.dimensions.unit}`, marginX + 5, textY);
+    if (source.dimensions.seatHeight > 0) {
+      doc.text(`- Seat Levels: ${source.dimensions.seatHeight}H x ${source.dimensions.seatWidth}W ${source.dimensions.unit}`, marginX + 5, textY);
     } else {
-      doc.text(`- Application Type: Standard Industrial Frame`, marginX + 5, textY);
+      doc.text(`- Structural layout: Fixed Weld Frame`, marginX + 5, textY);
     }
-    doc.text(`- Sheet Panel: ${source.sheet.type !== "None" ? `${source.sheet.type} (${source.sheet.thickness}mm)` : "None (Custom Panel/Plywood)"}`, marginX + 95, textY);
+    
+    doc.text(`- Top Panel sheet: ${source.sheet.type !== "None" ? `${source.sheet.type}` : "Frame Only (No Sheet Top)"}`, marginX + 95, textY);
 
     textY += 5;
-    doc.text(`- Estimated Steel Pipe Feet: ${source.pipeLength} Feet`, marginX + 5, textY);
-    doc.text(`- Sheet Qty per unit: ${source.sheet.type !== "None" ? `${source.sheet.qty} of 8x4 Sheet` : "N/A"}`, marginX + 95, textY);
+    const showPipeCalc = isInternal || source.outputControls?.showPipeCalc;
+    doc.text(showPipeCalc 
+      ? `- Active Cut feet: ${source.pipeLength} Ft` 
+      : `- Miter Joint cuts: Clean buffed finishing`, marginX + 5, textY);
+    doc.text(`- Jointing Weld style: Mitered joint buffing`, marginX + 95, textY);
 
-    textY += 6;
-    doc.setFont("helvetica", "bold");
-    doc.text(`Total Structural Unit Weight: ${source.pipeWeight} KG`, marginX + 5, textY);
-    doc.text(`Material Base Rate: ₹${source.pipe.rate}/kg (Steel), ₹${source.sheet.rate}/sheet (Panel)`, marginX + 95, textY);
-
-    currentY += 60;
+    currentY += 56;
 
     // 5. BILLING & COMMERCE SUMMARY TABLE
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
-    doc.text("COST & COMMERCIAL SUMMARY", marginX, currentY);
+    doc.text(isInternal ? "PRODUCTION ORDER MATERIAL & LABOUR LIST" : "QUOTED ITEMS OUTLINE", marginX, currentY);
 
     currentY += 4;
 
@@ -163,81 +170,106 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     doc.rect(marginX, currentY, 180, 7, "F");
     
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text("Cost Item Description", marginX + 4, currentY + 5);
-    doc.text("Unit Base Rate", marginX + 75, currentY + 5);
-    doc.text("Total Material Cost", marginX + 110, currentY + 5);
-    doc.text("Total Fabrication & Labour", marginX + 145, currentY + 5);
+    
+    if (isInternal) {
+      doc.text("Production Process / Operations", marginX + 4, currentY + 5);
+      doc.text("Metric Rate", marginX + 75, currentY + 5);
+      doc.text("Material Allocation", marginX + 110, currentY + 5);
+      doc.text("Manual Labour", marginX + 145, currentY + 5);
 
-    // Row 1: Pipe Steel
-    currentY += 7;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(marginX, currentY, 180, 8, "F");
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(51, 65, 85);
-    doc.text(`Skeletal Steel Piping (${source.pipe.type} Pipe)`, marginX + 4, currentY + 5.5);
-    doc.text(`₹ ${source.pipe.rate} / KG`, marginX + 75, currentY + 5.5);
-    doc.text(`₹ ${source.pipeCost}`, marginX + 110, currentY + 5.5);
-    doc.text("-", marginX + 145, currentY + 5.5);
+      // Internal row 1: Piping Cost
+      currentY += 7;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(marginX, currentY, 180, 8, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(51, 65, 85);
+      doc.text(`Framing Steel (${source.pipe.type} Pipe)`, marginX + 4, currentY + 5.5);
+      doc.text(`₹ ${source.pipe.rate} / KG`, marginX + 75, currentY + 5.5);
+      doc.text(`₹ ${source.pipeCost}`, marginX + 110, currentY + 5.5);
+      doc.text("-", marginX + 145, currentY + 5.5);
 
-    // Row 2: Sheet Metals
-    currentY += 8;
-    doc.setFillColor(...lightBg);
-    doc.rect(marginX, currentY, 180, 8, "F");
-    doc.text(`${source.sheet.type !== "None" ? `${source.sheet.type} Panel` : "No Sheet Top"}`, marginX + 4, currentY + 5.5);
-    doc.text(source.sheet.type !== "None" ? `₹ ${source.sheet.rate} / Sheet` : "-", marginX + 75, currentY + 5.5);
-    doc.text(source.sheet.type !== "None" ? `₹ ${source.sheetCost}` : "-", marginX + 110, currentY + 5.5);
-    doc.text("-", marginX + 145, currentY + 5.5);
+      // Internal row 2: Sheet Cost
+      currentY += 8;
+      doc.setFillColor(...lightBg);
+      doc.rect(marginX, currentY, 180, 8, "F");
+      doc.text(`${source.sheet.type !== "None" ? `${source.sheet.type}` : "No Sheet Panel required"}`, marginX + 4, currentY + 5.5);
+      doc.text(source.sheet.type !== "None" ? `₹ ${source.sheet.rate} / sheet` : "-", marginX + 75, currentY + 5.5);
+      doc.text(source.sheet.type !== "None" ? `₹ ${source.sheetCost}` : "-", marginX + 110, currentY + 5.5);
+      doc.text("-", marginX + 145, currentY + 5.5);
 
-    // Row 3: Fabrication steps
-    currentY += 8;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(marginX, currentY, 180, 8, "F");
-    doc.text("Manufacturing Labour (Welding, Grinding, Polish, Packing)", marginX + 4, currentY + 5.5);
-    doc.text("-", marginX + 75, currentY + 5.5);
-    doc.text("-", marginX + 110, currentY + 5.5);
-    doc.text(`₹ ${source.labourCostSum}`, marginX + 145, currentY + 5.5);
+      // Internal row 3: Fabrication Labor breakdown
+      currentY += 8;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(marginX, currentY, 180, 8, "F");
+      doc.text(`Fabrication labor (Welding: ₹${source.costing.welding}, Polish: ₹${source.costing.polish})`, marginX + 4, currentY + 5.5);
+      doc.text("-", marginX + 75, currentY + 5.5);
+      doc.text("-", marginX + 110, currentY + 5.5);
+      doc.text(`₹ ${source.labourCostSum}`, marginX + 145, currentY + 5.5);
+    } else {
+      // Customer Safe Table: Hide internal details, show simple commercial block!
+      doc.text("Commercial Item Description", marginX + 4, currentY + 5);
+      doc.text("Quantities", marginX + 85, currentY + 5);
+      doc.text("Billing rate (Excl Tax)", marginX + 145, currentY + 5);
 
-    currentY += 8;
+      currentY += 7;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(marginX, currentY, 180, 10, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...primaryColor);
+      doc.text(source.productName, marginX + 4, currentY + 6);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Custom structural framing built with premium ${source.pipe.type} alloy`, marginX + 4, currentY + 10);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(51, 65, 85);
+      doc.text(`${source.quantity} Units`, marginX + 85, currentY + 7);
+      
+      const customerUnitRate = Math.round(source.taxableAmount / source.quantity);
+      doc.text(`₹ ${customerUnitRate.toLocaleString("en-IN")}`, marginX + 145, currentY + 7);
+      
+      currentY += 4; // adjustment
+    }
+
+    currentY += 12;
     doc.setDrawColor(...borderLine);
     doc.line(marginX, currentY, 210 - marginX, currentY);
 
-    // 6. TOTALS COLUMN (Right Aligned)
-    currentY += 4;
+    // 6. TOTALS COLUMN
+    currentY += 5;
     const finX1 = 120;
-    const finX2 = 165;
+    const finX2 = 175;
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
-    
-    doc.text(`Cost Per Unit (Material + Labour):`, finX1, currentY);
-    doc.text(`₹ ${source.subtotal}`, finX2, currentY, { align: "right" });
 
-    currentY += 5;
-    doc.text(`Subtotal Overall (${source.quantity} Units):`, finX1, currentY);
-    doc.text(`₹ ${source.subtotal * source.quantity}`, finX2, currentY, { align: "right" });
+    if (isInternal) {
+      doc.text(`Internal Material + Labour Base:`, finX1, currentY);
+      doc.text(`₹ ${source.subtotal * source.quantity}`, finX2, currentY, { align: "right" });
 
-    currentY += 5;
-    doc.text(`Flat Logistic/Transport Cost:`, finX1, currentY);
-    doc.text(`₹ ${source.costing.transport}`, finX2, currentY, { align: "right" });
+      currentY += 5;
+      doc.text(`Logistics Flat:`, finX1, currentY);
+      doc.text(`₹ ${source.costing.transport}`, finX2, currentY, { align: "right" });
 
-    currentY += 5;
-    doc.text(`Margin markup profit (${source.markup}%):`, finX1, currentY);
-    doc.text(`₹ ${source.markupAmount}`, finX2, currentY, { align: "right" });
+      currentY += 5;
+      doc.text(`Net Internal Markups (${source.markup}%):`, finX1, currentY);
+      doc.text(`₹ ${source.markupAmount}`, finX2, currentY, { align: "right" });
+    } else {
+      // Customer Safe billing
+      doc.text(`Net Taxable Commercial Base:`, finX1, currentY);
+      doc.text(`₹ ${Math.round(source.taxableAmount).toLocaleString("en-IN")}`, finX2, currentY, { align: "right" });
+    }
 
-    currentY += 5.5;
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...primaryColor);
-    doc.text(`Taxable Subtotal:`, finX1, currentY);
-    doc.text(`₹ ${source.taxableAmount}`, finX2, currentY, { align: "right" });
-
-    currentY += 5;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(71, 85, 105);
-    doc.text(`Standard SGST & CGST (${source.gst}%):`, finX1, currentY);
-    doc.text(`₹ ${source.gstAmount}`, finX2, currentY, { align: "right" });
+    if (source.gstEnabled) {
+      currentY += 5;
+      doc.text(`Integrated SGST & CGST (${source.gst}%):`, finX1, currentY);
+      doc.text(`₹ ${Math.round(source.gstAmount).toLocaleString("en-IN")}`, finX2, currentY, { align: "right" });
+    }
 
     // Grand total highlight card
     currentY += 6;
@@ -245,52 +277,59 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     doc.rect(finX1 - 5, currentY - 4, 85, 9, "F");
     
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
-    doc.text(`GRAND TOTAL (INR):`, finX1, currentY + 2);
-    doc.text(`Rs. ${source.grandTotal.toLocaleString("en-IN")}/-`, finX2 + 10, currentY + 2, { align: "right" });
+    doc.text(isInternal ? "TOTAL FABRICATION VALUE:" : "GRAND BILLING SUM (INR):", finX1, currentY + 2);
+    doc.text(`₹ ${Math.round(source.grandTotal).toLocaleString("en-IN")}/-`, finX2 + 5, currentY + 2, { align: "right" });
 
-    // Left aligned Notes & Photos
-    const noteY = currentY - 32;
+    // Left aligned remarks or worker notes
+    const noteY = currentY - 20;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
-    doc.text("Special Instructions / Client Notes:", marginX, noteY);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.5);
-    doc.setTextColor(100, 116, 139);
-    
-    const wrappedNotes = doc.splitTextToSize(source.notes || "No special requests. Item built to standard production gauges.", 90);
-    doc.text(wrappedNotes, marginX, noteY + 4.5);
 
-    // Embed sketch photo if active
-    if (source.images && source.images.length > 0) {
-      try {
-        const imgBase64 = source.images[0];
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.setTextColor(...primaryColor);
-        doc.text("Product Visual Reference:", marginX, noteY + 20);
-        
-        doc.rect(marginX, noteY + 23, 40, 26);
-        doc.addImage(imgBase64, "JPEG", marginX + 1, noteY + 24, 38, 24);
-      } catch (imgErr) {}
+    if (isInternal) {
+      doc.text("Workshop Production Remarks:", marginX, noteY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(71, 85, 105);
+      
+      const wrapNotes = doc.splitTextToSize(source.workerNotes || "Clean weld joints. Avoid scraping the steel frames.", 90);
+      doc.text(wrapNotes, marginX, noteY + 4);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Assembly instructions:", marginX, noteY + 16);
+      doc.setFont("helvetica", "normal");
+      const wrapInstructions = doc.splitTextToSize(source.fabricationInstructions || "Miter and polish TIG joints beautifully.", 90);
+      doc.text(wrapInstructions, marginX, noteY + 20);
+    } else {
+      // Customer details visual remarks
+      doc.text("Special Instructions / Client Notes:", marginX, noteY);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      const wrapNotes = doc.splitTextToSize(source.notes || "No special requests. Product built standard Coimbatore SIDCO standards.", 90);
+      doc.text(wrapNotes, marginX, noteY + 4);
     }
 
     currentY += 15;
 
     // 7. CONTRACT TERMS
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.setTextColor(...primaryColor);
-    doc.text("TERMS AND CONDITIONS", marginX, currentY);
+    if (!isInternal) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...primaryColor);
+      doc.text("TERMS AND CONDITIONS", marginX, currentY);
 
-    currentY += 4.5;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    const termsLines = doc.splitTextToSize(companyInfo.terms, 180);
-    doc.text(termsLines, marginX, currentY);
+      currentY += 4.5;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      const termsLines = doc.splitTextToSize(companyInfo.terms, 180);
+      doc.text(termsLines, marginX, currentY);
+    } else {
+      currentY += 10;
+    }
 
     // 8. SIGNATURE BOXES
     currentY += 34;
@@ -301,24 +340,28 @@ export async function generateQuotationPDF(source, companyInfo, triggerAlert) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(...primaryColor);
-    doc.text("For INDIAN MAKE STEEL INDUSTRIES", marginX, currentY + 4);
+    doc.text(isInternal ? "WORKSHOP SUPERVISOR" : "For INDIAN MAKE STEEL INDUSTRIES", marginX, currentY + 4);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text("Authorized Fabricator", marginX, currentY + 8);
+    doc.text(isInternal ? "Factory Production Desk" : "Authorized Signatory", marginX, currentY + 8);
 
-    // Customer acceptance
-    doc.line(140, currentY, 190, currentY);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.text("Customer Acceptance", 140, currentY + 4);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text("Sign & Seal", 140, currentY + 8);
+    if (!isInternal) {
+      // Customer acceptance
+      doc.line(140, currentY, 190, currentY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text("Customer Acceptance Acceptance", 140, currentY + 4);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Sign & Seal", 140, currentY + 8);
+    }
 
-    doc.save(`IMSI_${source.quoteNo}_${(source.clientName || "Customer").replace(/\s+/g, "_")}.pdf`);
-    triggerAlert("success", `PDF Quotation "${source.quoteNo}" generated successfully!`);
+    // Save compiled file
+    const docName = isInternal ? "Factory_WorkOrder" : "Customer_Quotation";
+    doc.save(`IMSI_${source.quoteNo}_${docName}.pdf`);
+    triggerAlert("success", `${isInternal ? "Internal Work Order" : "Customer PDF"} exported successfully!`);
   } catch (err) {
     console.error(err);
-    triggerAlert("error", "Error creating PDF quotation. Please try again.");
+    triggerAlert("error", "Error generating vector PDF layout.");
   }
 }
